@@ -21,6 +21,14 @@ func (r CommandRegistry) AddCommand(name string, irCode []byte) error {
 	return nil
 }
 
+func (r CommandRegistry) Commands() []string {
+	out := make([]string, 0, len(r))
+	for k := range r {
+		out = append(out, k)
+	}
+	return out
+}
+
 func (r CommandRegistry) Save(out io.Writer) error {
 	obj := make(map[string]string, len(r))
 
