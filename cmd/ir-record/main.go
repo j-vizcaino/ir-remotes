@@ -110,6 +110,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if len(outputFile) == 0 {
+		log.Error("You must specify an output filename using -output command line option.")
+		os.Exit(1)
+	}
+
 	cmdReg, err := loadCommandRegistry(outputFile)
 	if err != nil {
 		log.WithError(err).WithField("filename", outputFile).Fatal("Failed to load command registry file")
