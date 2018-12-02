@@ -9,7 +9,6 @@ import (
 
 	"github.com/j-vizcaino/ir-remotes/pkg/commands"
 
-	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,7 +30,10 @@ func findDevice(timeout time.Duration) broadlink.Device {
 
 	// TODO: add code to pick the right one, in case multiple devices are detected
 	d := devs[0]
-	log.WithField("device", d).Info("Device found!")
+	log.WithField("address", d.UDPAddr.String()).
+		WithField("mac", fmt.Sprintf("%02x", d.MACAddr)).
+		Info("Device found!")
+
 	myname, err := os.Hostname() // Your local machine's name.
 	if err != nil {
 		log.WithError(err).Fatal("Failed to get hostname")
@@ -45,13 +47,13 @@ func findDevice(timeout time.Duration) broadlink.Device {
 	return d
 }
 
-func captureIRCode(device broadlink.Device, timeout time.Duration) (commands.IRCommand, error) {
+func captureIRCode(device broadlink.Device, timeout time.Duration, cmdName string) (commands.IRCommand, error) {
 	// Enter capturing mode.
 	if err := device.StartCaptureRemoteControlCode(); err != nil {
 		log.WithError(err).Error("Failed to start capture mode")
 		return nil, err
 	}
-	log.Info("Waiting for IR command...")
+	log.Infof("Waiting for IR code. Press '%s' button...", cmdName)
 
 	start := time.Now()
 	for time.Now().Sub(start) < timeout {
@@ -93,69 +95,48 @@ func saveCommandRegistry(filename string, cmdReg commands.CommandRegistry) error
 	return cmdReg.Save(fd)
 }
 
-func askContinue() (bool, error) {
-	prompt := promptui.Select{
-		Label: "Select next action",
-		Items: []string{"Add another command", "Save and exit"},
-	}
-	idx, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return idx == 0, nil
-}
-
 func main() {
 	var discoveryTimeout time.Duration
 	var captureTimeout time.Duration
+	var outputFile string
 
 	flag.DurationVar(&discoveryTimeout, "discovery-timeout", time.Second, "device discovery timeout")
 	flag.DurationVar(&captureTimeout, "capture-timeout", 30*time.Second, "infra-red command capture timeout")
+	flag.StringVar(&outputFile, "output", "", "output filename where captured codes get saved. If the file already exists, its content is loaded first and the captured codes are added to the content.")
 	flag.Parse()
 
-	if flag.NArg() != 1 {
-		log.Error("You must specify the command registry output filename.")
+	if flag.NArg() < 1 {
+		log.Error("You must specify at least one command name to capture.")
 		os.Exit(1)
 	}
 
-	outFile := flag.Arg(0)
-	cmdReg, err := loadCommandRegistry(outFile)
+	cmdReg, err := loadCommandRegistry(outputFile)
 	if err != nil {
-		log.WithError(err).WithField("filename", outFile).Fatal("Failed to load command registry file")
+		log.WithError(err).WithField("filename", outputFile).Fatal("Failed to load command registry file")
 	}
 
 	bd := findDevice(discoveryTimeout)
 
-	keepGoing := true
-
-	for keepGoing {
-		cmd, err := captureIRCode(bd, captureTimeout)
-		if err != nil {
-			log.WithError(err).Fatal("Failed to capture IR command")
-		}
-		prompt := promptui.Prompt{
-			Label:    "Name of the command",
-		}
-		result, err := prompt.Run()
-		if err != nil {
-			log.WithError(err).Error("Prompt failed")
-			break
-		}
-
-		if err := cmdReg.AddCommand(result, cmd); err != nil {
-			log.WithError(err).Error("Failed to add command to registry")
+	for _, cmdName := range flag.Args() {
+		_, ok := cmdReg[cmdName]
+		if ok {
+			log.WithField("command", cmdName).Info("Command name already exist in the registry. Skipping capture.")
 			continue
 		}
 
-		keepGoing, err = askContinue()
+		cmd, err := captureIRCode(bd, captureTimeout, cmdName)
 		if err != nil {
-			log.WithError(err).Error("Prompt failed")
-			break
+			log.WithError(err).Fatal("Failed to capture IR command")
+		}
+
+		if err := cmdReg.AddCommand(cmdName, cmd); err != nil {
+			log.WithError(err).WithField("command", cmdName).Error("Failed to add command to registry")
+			continue
 		}
 	}
 
-	if err := saveCommandRegistry(outFile, cmdReg); err != nil {
-		log.WithError(err).WithField("filename", outFile).Error("Failed to save commands to file")
+	if err := saveCommandRegistry(outputFile, cmdReg); err != nil {
+		log.WithError(err).WithField("filename", outputFile).Error("Failed to save commands to file")
 		os.Exit(1)
 	}
 }
