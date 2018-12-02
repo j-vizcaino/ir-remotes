@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 )
 
 type CommandRegistry map[string]IRCommand
@@ -31,6 +32,16 @@ func (r CommandRegistry) Save(out io.Writer) error {
 	return enc.Encode(obj)
 }
 
+func (r CommandRegistry) SaveToFile(filename string) error {
+	fd, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	return r.Save(fd)
+}
+
 func (r CommandRegistry) Load(in io.Reader) error {
 	dec := json.NewDecoder(in)
 	obj := make(map[string]string)
@@ -47,4 +58,13 @@ func (r CommandRegistry) Load(in io.Reader) error {
 		r[name] = irCode
 	}
 	return nil
+}
+
+func (r CommandRegistry) LoadFromFile(filename string) error {
+	fd, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+	return r.Load(fd)
 }

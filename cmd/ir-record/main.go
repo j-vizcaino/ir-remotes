@@ -73,28 +73,6 @@ func captureIRCode(device broadlink.Device, timeout time.Duration, cmdName strin
 	return nil, fmt.Errorf("timed out waiting for IR control codes")
 }
 
-func loadCommandRegistry(filename string) (commands.CommandRegistry, error) {
-	ret := commands.CommandRegistry{}
-	fd, err := os.Open(filename)
-	if os.IsNotExist(err) {
-		return ret, nil
-	}
-	defer fd.Close()
-
-	err = ret.Load(fd)
-	return ret, err
-}
-
-func saveCommandRegistry(filename string, cmdReg commands.CommandRegistry) error {
-	fd, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-
-	return cmdReg.Save(fd)
-}
-
 func main() {
 	var discoveryTimeout time.Duration
 	var captureTimeout time.Duration
@@ -115,8 +93,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	cmdReg, err := loadCommandRegistry(outputFile)
-	if err != nil {
+	cmdReg := commands.CommandRegistry{}
+	err := cmdReg.LoadFromFile(outputFile)
+	if err != nil && !os.IsNotExist(err) {
 		log.WithError(err).WithField("filename", outputFile).Fatal("Failed to load command registry file")
 	}
 
@@ -140,7 +119,7 @@ func main() {
 		}
 	}
 
-	if err := saveCommandRegistry(outputFile, cmdReg); err != nil {
+	if err := cmdReg.SaveToFile(outputFile); err != nil {
 		log.WithError(err).WithField("filename", outputFile).Error("Failed to save commands to file")
 		os.Exit(1)
 	}
