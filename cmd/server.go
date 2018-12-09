@@ -77,7 +77,7 @@ func (h *Handler) abort(c *gin.Context, code int, err string) {
 }
 
 func (h *Handler) getDevices(c *gin.Context) {
-	c.JSON(http.StatusOK, h.deviceInfoList)
+	c.IndentedJSON(http.StatusOK, h.deviceInfoList)
 }
 
 func (h *Handler) getDevice(c *gin.Context) {
@@ -89,11 +89,11 @@ func (h *Handler) getDevice(c *gin.Context) {
 		h.abortNotFound(c, fmt.Sprintf("no such device named %q", devName))
 		return
 	}
-	c.JSON(http.StatusOK, devInfo)
+	c.IndentedJSON(http.StatusOK, devInfo)
 }
 
 func (h *Handler) getRemotes(c *gin.Context) {
-	c.JSON(http.StatusOK, h.remoteList.Names())
+	c.IndentedJSON(http.StatusOK, h.remoteList.Names())
 }
 
 func (h *Handler) helperGetRemote(c *gin.Context) *remotes.Remote {
@@ -110,7 +110,7 @@ func (h *Handler) getRemote(c *gin.Context) {
 	if r == nil {
 		return
 	}
-	c.JSON(http.StatusOK, r)
+	c.IndentedJSON(http.StatusOK, r)
 }
 
 func (h *Handler) postRemoteCommand(c *gin.Context) {
@@ -130,7 +130,7 @@ func (h *Handler) postRemoteCommand(c *gin.Context) {
 		h.abort(c, http.StatusInternalServerError, fmt.Sprintf("send IR command failed: %s", err))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.IndentedJSON(http.StatusOK, gin.H{"success": true})
 }
 
 
