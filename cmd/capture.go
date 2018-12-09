@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/j-vizcaino/ir-remotes/pkg/utils"
 	"os"
 	"time"
 
-	"github.com/j-vizcaino/ir-remotes/pkg/commands"
+	"github.com/j-vizcaino/ir-remotes/pkg/remotes"
 	"github.com/mixcode/broadlink"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -15,7 +16,8 @@ var captureCmd = &cobra.Command{
 	Use:   "capture [OPTIONS] COMMAND [COMMAND...]",
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Capture and save IR control codes.",
-	Long:  `Read named IR commands from Broadlink RM and save them to an output file.`,
+	Long:  `Read named IR remotes from Broadlink RM and save them to an output file.
+When remotes file already exists, its content is loaded and newly captured commands are added to the file.`,
 	Run:   Capture,
 }
 
@@ -39,22 +41,27 @@ func init() {
 
 	flags.DurationVar(&discoveryTimeout, "discovery-timeout", 5*time.Second, "Broadlink device network discovery timeout.")
 
-	rootCmd.AddCommand(captureCmd)
+	cmdRoot.AddCommand(captureCmd)
 }
 
 func Capture(cmd *cobra.Command, args []string) {
-	cmdReg := commands.CommandRegistry{}
-	err := cmdReg.LoadFromFile(remoteFile)
+	remoteList := remotes.RemoteList{}
+	err := utils.LoadFromFile(&remoteList, remotesFile)
 	if err != nil && !os.IsNotExist(err) {
-		log.WithError(err).WithField("remotes-file", remoteFile).Fatal("Failed to load command registry file")
+		log.WithError(err).WithField("remotes-file", remotesFile).Fatal("Failed to load remotes file")
 	}
 
+	remote := remoteList.Find(remoteName)
+	if remote == nil {
+		remote = remotes.NewRemote(remoteName)
+		remoteList = append(remoteList, remote)
+	}
 	bd := findDevice(discoveryTimeout)
 
 	for _, cmdName := range args {
-		_, ok := cmdReg[cmdName]
+		_, ok := remote.Commands[cmdName]
 		if ok {
-			log.WithField("command", cmdName).Info("Command name already exist in the registry. Skipping capture.")
+			log.WithField("command", cmdName).Info("Command name already exists. Skipping capture.")
 			continue
 		}
 
@@ -63,14 +70,14 @@ func Capture(cmd *cobra.Command, args []string) {
 			log.WithError(err).Fatal("Failed to capture IR command")
 		}
 
-		if err := cmdReg.AddCommand(cmdName, cmd); err != nil {
-			log.WithError(err).WithField("command", cmdName).Error("Failed to add command to registry")
+		if err := remote.AddCommand(cmdName, cmd); err != nil {
+			log.WithError(err).WithField("command", cmdName).Error("Failed to add command to remote")
 			continue
 		}
 	}
 
-	if err := cmdReg.SaveToFile(remoteFile); err != nil {
-		log.WithError(err).WithField("remotes-file", remoteFile).Error("Failed to save commands to file")
+	if err := utils.SaveToFile(&remoteList, remotesFile); err != nil {
+		log.WithError(err).WithField("remotes-file", remotesFile).Error("Failed to save remotes list to file")
 		os.Exit(1)
 	}
 }
@@ -104,7 +111,7 @@ func findDevice(timeout time.Duration) broadlink.Device {
 	return d
 }
 
-func captureIRCode(device broadlink.Device, timeout time.Duration, cmdName string) (commands.IRCommand, error) {
+func captureIRCode(device broadlink.Device, timeout time.Duration, cmdName string) (remotes.IRCommand, error) {
 	// Enter capturing mode.
 	if err := device.StartCaptureRemoteControlCode(); err != nil {
 		log.WithError(err).Error("Failed to start capture mode")

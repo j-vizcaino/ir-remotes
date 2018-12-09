@@ -8,32 +8,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
+var cmdRoot = &cobra.Command{
 	Use:   "ir-remotes",
 	Short: "Tool for using Broadlink RM infra-red blasters",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
-	},
 }
 
-var remoteFile string
+var remotesFile string
+var devicesFile string
 
 func init() {
 	log.SetFormatter(&log.TextFormatter{
 		DisableTimestamp: true,
 	})
 
-	flags := rootCmd.PersistentFlags()
-	flags.StringVarP(&remoteFile,
+	flags := cmdRoot.PersistentFlags()
+	flags.StringVarP(&remotesFile,
 		"remotes-file",
 		"f",
 		"remotes.json",
 		"Filename where remotes IR codes are loaded and saved.")
+
+	flags.StringVarP(&devicesFile,
+		"devices-file",
+		"d",
+		"devices.json",
+		"Filename where Broadlink devices information are loaded and saved.")
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	if err := cmdRoot.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

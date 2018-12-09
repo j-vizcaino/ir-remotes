@@ -30,7 +30,7 @@ func init() {
 }
 
 func Discover(_ *cobra.Command, _ []string) {
-	deviceList := devices.DeviceList{}
+	deviceList := devices.DeviceInfoList{}
 	err := utils.LoadFromFile(&deviceList, devicesFile)
 	if err != nil && !os.IsNotExist(err) {
 		log.WithError(err).WithField("devices-file", devicesFile).Fatal("Failed to load devices from file.")
@@ -54,7 +54,7 @@ func Discover(_ *cobra.Command, _ []string) {
 			WithField("model", model).
 			Info("Found device.")
 
-		existing, found := deviceList.Find(func(dev devices.Device) bool {
+		existing, found := deviceList.Find(func(dev devices.DeviceInfo) bool {
 			return dev.MACAddress == macAddr
 		})
 		if found {

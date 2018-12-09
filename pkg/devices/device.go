@@ -2,11 +2,13 @@ package devices
 
 import (
 	"fmt"
-	"github.com/mixcode/broadlink"
 	"net"
+	"os"
+
+	"github.com/mixcode/broadlink"
 )
 
-type Device struct {
+type DeviceInfo struct {
 	Name       string `json:"name"`
 	UDPAddress string `json:"udpAddress"`
 	MACAddress string `json:"macAddress"`
@@ -14,12 +16,12 @@ type Device struct {
 	TypeName   string `json:"typeName,omitempty"`
 }
 
-type DeviceList []Device
+type DeviceInfoList []DeviceInfo
 
-func NewFromBroadlink(name string, device broadlink.Device) Device {
+func NewDeviceInfo(name string, device broadlink.Device) DeviceInfo {
 	model, _ := device.DeviceName()
 
-	return Device{
+	return DeviceInfo{
 		Name:       name,
 		UDPAddress: device.UDPAddr.String(),
 		MACAddress: net.HardwareAddr(device.MACAddr).String(),
@@ -28,7 +30,7 @@ func NewFromBroadlink(name string, device broadlink.Device) Device {
 	}
 }
 
-func (d *Device) Broadlink() (broadlink.Device, error) {
+func (d *DeviceInfo) Broadlink() (broadlink.Device, error) {
 	mac, err := net.ParseMAC(d.MACAddress)
 	if err != nil {
 		return broadlink.Device{}, fmt.Errorf("failed to parse MAC address, %s", err)
@@ -45,8 +47,8 @@ func (d *Device) Broadlink() (broadlink.Device, error) {
 	}, nil
 }
 
-func (dl *DeviceList) AddDevice(name string, device broadlink.Device) error {
-	dev := NewFromBroadlink(name, device)
+func (dl *DeviceInfoList) AddDevice(name string, device broadlink.Device) error {
+	dev := NewDeviceInfo(name, device)
 
 	for idx, d := range *dl {
 		// Same MAC address -> update existing record
@@ -62,13 +64,32 @@ func (dl *DeviceList) AddDevice(name string, device broadlink.Device) error {
 	return nil
 }
 
-type DevicePredicate func(Device) bool
+type DeviceInfoPredicate func(DeviceInfo) bool
 
-func (dl DeviceList) Find(predicate DevicePredicate) (Device, bool) {
+func (dl DeviceInfoList) Find(predicate DeviceInfoPredicate) (DeviceInfo, bool) {
 	for _, dev := range dl {
 		if predicate(dev) {
 			return dev, true
 		}
 	}
-	return Device{}, false
+	return DeviceInfo{}, false
+}
+
+func (dl DeviceInfoList) Initialize() ([]broadlink.Device, error) {
+	out := make([]broadlink.Device, 0, len(dl))
+	myname, _ := os.Hostname() // Your local machine's name.
+	myid := make([]byte, 15) // Must be 15 bytes long.
+
+	for _, d := range dl {
+		bd, err := d.Broadlink()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := bd.Auth(myid, myname); err != nil {
+			return nil, fmt.Errorf("failed to authenticate with device %s, addr %s, %s", d.Name, d.UDPAddress, err)
+		}
+		out = append(out, bd)
+	}
+	return out, nil
 }
