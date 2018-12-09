@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ var cmdRoot = &cobra.Command{
 
 var remotesFile string
 var devicesFile string
+var udpTimeout time.Duration
 
 func init() {
 	log.SetFormatter(&log.TextFormatter{
@@ -33,6 +35,11 @@ func init() {
 		"d",
 		"devices.json",
 		"Filename where Broadlink devices information are loaded and saved.")
+
+	flags.DurationVar(&udpTimeout,
+		"udp-timeout",
+		1 * time.Second,
+		"Amount of time to wait for an answer from Broadlink device.")
 }
 
 func Execute() {

@@ -42,7 +42,7 @@ func mustHandler() *Handler {
 	if len(devInfoList) == 0 {
 		log.WithField("devices-file", devicesFile).Fatal("No device listed in file. Aborting.")
 	}
-	devList, err := devInfoList.Initialize()
+	devList, err := devInfoList.Initialize(udpTimeout)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to initialize a Broadlink device")
 	}
