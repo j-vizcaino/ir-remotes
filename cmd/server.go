@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/j-vizcaino/ir-remotes/pkg/devices"
 	"github.com/j-vizcaino/ir-remotes/pkg/remotes"
+	"github.com/j-vizcaino/ir-remotes/pkg/ui"
 	"github.com/j-vizcaino/ir-remotes/pkg/utils"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mixcode/broadlink"
@@ -21,10 +21,14 @@ var (
 		Run:   Server,
 	}
 	listenAddress string
+	frontendFile string
 )
 
 func init() {
-	cmdServer.Flags().StringVarP(&listenAddress, "listen-address", "l", ":8080", "Server listen address")
+	flags := cmdServer.Flags()
+	flags.StringVarP(&listenAddress, "listen-address", "l", ":8080", "Server listen address")
+	flags.StringVar(&frontendFile, "frontend-file", "frontend.json", "JSON file with the frontend remote definitions.")
+
 	cmdRoot.AddCommand(cmdServer)
 }
 
@@ -133,11 +137,30 @@ func (h *Handler) postRemoteCommand(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"success": true})
 }
 
+func mustRenderIndex() string {
+	remotes := make([]ui.Remote, 0)
+	if err := utils.LoadFromFile(&remotes, frontendFile); err != nil {
+		log.WithError(err).WithField("frontend-file", frontendFile).Fatal("Failed to load frontend data")
+	}
+	index, err := ui.RenderIndex(remotes)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to render main page")
+	}
+	return index
+}
 
 func Server(_ *cobra.Command, _ []string) {
 	h := mustHandler()
 
 	r := gin.Default()
+
+	indexPage := mustRenderIndex()
+	r.GET("/", func(c *gin.Context){
+		c.Status(http.StatusOK)
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.Writer.WriteHeaderNow()
+		c.Writer.WriteString(indexPage)
+	})
 
 	api := r.Group("/api")
 	api.GET("/devices/", h.getDevices)
