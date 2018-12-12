@@ -79,7 +79,7 @@ func (dl DeviceInfoList) Find(predicate DeviceInfoPredicate) (DeviceInfo, bool) 
 func (dl DeviceInfoList) Initialize(timeout time.Duration) ([]broadlink.Device, error) {
 	out := make([]broadlink.Device, 0, len(dl))
 	myname, _ := os.Hostname() // Your local machine's name.
-	myid := make([]byte, 15) // Must be 15 bytes long.
+	myid := make([]byte, 15)   // Must be 15 bytes long.
 
 	for _, d := range dl {
 		bd, err := d.Broadlink()

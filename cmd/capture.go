@@ -16,9 +16,9 @@ var captureCmd = &cobra.Command{
 	Use:   "capture [OPTIONS] COMMAND [COMMAND...]",
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Capture and save IR control codes.",
-	Long:  `Read named IR remotes from Broadlink RM and save them to an output file.
+	Long: `Read named IR remotes from Broadlink RM and save them to an output file.
 When remotes file already exists, its content is loaded and newly captured commands are added to the file.`,
-	Run:   Capture,
+	Run: Capture,
 }
 
 var remoteName string

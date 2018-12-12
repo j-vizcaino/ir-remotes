@@ -15,9 +15,9 @@ func TestDeviceList_AddDevice(t *testing.T) {
 	g.Expect(devList).To(HaveLen(0))
 
 	dev := broadlink.Device{
-		MACAddr: []byte{0,1,2,3,4,5},
+		MACAddr: []byte{0, 1, 2, 3, 4, 5},
 		UDPAddr: net.UDPAddr{IP: net.ParseIP("1.1.1.1"), Port: 80},
-		Type: 1234,
+		Type:    1234,
 	}
 
 	g.Expect(devList.AddDevice("foo", dev)).To(Succeed())
@@ -30,7 +30,7 @@ func TestDeviceList_AddDevice(t *testing.T) {
 	g.Expect(devList[0]).To(Equal(NewDeviceInfo("bar", dev)))
 
 	// Add new device
-	dev.MACAddr = []byte{5,4,3,2,1,0}
+	dev.MACAddr = []byte{5, 4, 3, 2, 1, 0}
 	g.Expect(devList.AddDevice("boo", dev)).To(Succeed())
 	g.Expect(devList).To(HaveLen(2))
 
@@ -44,14 +44,14 @@ func TestDeviceList_Find(t *testing.T) {
 
 	devList := DeviceInfoList{}
 	dev := broadlink.Device{
-		MACAddr: []byte{0,1,2,3,4,5},
+		MACAddr: []byte{0, 1, 2, 3, 4, 5},
 		UDPAddr: net.UDPAddr{IP: net.ParseIP("1.1.1.1"), Port: 80},
-		Type: 1234,
+		Type:    1234,
 	}
 
 	foo := NewDeviceInfo("foo", dev)
 	g.Expect(devList.AddDevice("foo", dev)).To(Succeed())
-	dev.MACAddr = []byte{5,4,3,2,1,0}
+	dev.MACAddr = []byte{5, 4, 3, 2, 1, 0}
 	boo := NewDeviceInfo("boo", dev)
 	g.Expect(devList.AddDevice("boo", dev)).To(Succeed())
 
@@ -63,6 +63,6 @@ func TestDeviceList_Find(t *testing.T) {
 	g.Expect(found).To(BeTrue())
 	g.Expect(res).To(Equal(foo))
 
-	res, found = devList.Find(func(d DeviceInfo) bool { return d.Name == "missing"})
+	res, found = devList.Find(func(d DeviceInfo) bool { return d.Name == "missing" })
 	g.Expect(found).To(BeFalse())
 }

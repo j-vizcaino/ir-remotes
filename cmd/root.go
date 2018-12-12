@@ -38,7 +38,7 @@ func init() {
 
 	flags.DurationVar(&udpTimeout,
 		"udp-timeout",
-		1 * time.Second,
+		1*time.Second,
 		"Amount of time to wait for an answer from Broadlink device.")
 }
 

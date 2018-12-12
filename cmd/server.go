@@ -21,7 +21,7 @@ var (
 		Run:   Server,
 	}
 	listenAddress string
-	frontendFile string
+	frontendFile  string
 )
 
 func init() {
@@ -34,8 +34,8 @@ func init() {
 
 type Handler struct {
 	deviceInfoList devices.DeviceInfoList
-	deviceList []broadlink.Device
-	remoteList remotes.RemoteList
+	deviceList     []broadlink.Device
+	remoteList     remotes.RemoteList
 }
 
 func mustHandler() *Handler {
@@ -61,8 +61,8 @@ func mustHandler() *Handler {
 
 	return &Handler{
 		deviceInfoList: devInfoList,
-		deviceList: devList,
-		remoteList: remoteList,
+		deviceList:     devList,
+		remoteList:     remoteList,
 	}
 }
 
@@ -75,7 +75,7 @@ func (h *Handler) abort(c *gin.Context, code int, err string) {
 		code,
 		gin.H{
 			"success": false,
-			"error": err,
+			"error":   err,
 		},
 	)
 }
@@ -155,7 +155,7 @@ func Server(_ *cobra.Command, _ []string) {
 	r := gin.Default()
 
 	indexPage := mustRenderIndex()
-	r.GET("/", func(c *gin.Context){
+	r.GET("/", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 		c.Header("Content-Type", "text/html; charset=utf-8")
 		c.Writer.WriteHeaderNow()
