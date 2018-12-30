@@ -2,11 +2,10 @@ language: go
 
 go:
 - "1.11"
-- "1.10"
 
-install:
-- go get -u github.com/golang/dep/cmd/dep
+env:
+- GO111MODULE=on
 
 script:
-- dep ensure -vendor-only
+- go mod download
 - make test build
