@@ -57,7 +57,7 @@ The `capture` command
 With device list and a couple of IR codes saved to disk, the REST service can be started.
 
 ```bash
-$ ir-remotes serve
+$ ir-remotes server
 ```
 
 The following endpoints are provided by the service:
