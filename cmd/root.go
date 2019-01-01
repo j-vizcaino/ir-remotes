@@ -42,6 +42,10 @@ func init() {
 		"Amount of time to wait for an answer from Broadlink device.")
 }
 
+func Root() *cobra.Command {
+  return cmdRoot
+}
+
 func Execute() {
 	if err := cmdRoot.Execute(); err != nil {
 		fmt.Println(err)
