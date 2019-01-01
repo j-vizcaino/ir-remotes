@@ -12,3 +12,5 @@
 *.out
 vendor/
 .idea/
+dist/
+ir-remotes
