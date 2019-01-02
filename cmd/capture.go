@@ -120,7 +120,7 @@ func captureIRCode(device broadlink.Device, timeout time.Duration, cmdName strin
 	log.Infof("Waiting for IR code. Press '%s' button...", cmdName)
 
 	start := time.Now()
-	for time.Now().Sub(start) < timeout {
+	for time.Since(start) < timeout {
 		remotetype, ircode, err := device.ReadCapturedRemoteControlCode()
 		if err != nil {
 			if err == broadlink.ErrNotCaptured {
