@@ -65,4 +65,5 @@ func TestDeviceList_Find(t *testing.T) {
 
 	res, found = devList.Find(func(d DeviceInfo) bool { return d.Name == "missing" })
 	g.Expect(found).To(BeFalse())
+	g.Expect(res).To(Equal(DeviceInfo{}))
 }
