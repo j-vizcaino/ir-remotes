@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mixcode/broadlink"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +33,6 @@ func init() {
 
 type Handler struct {
 	deviceInfoList devices.DeviceInfoList
-	deviceList     []broadlink.Device
 	remoteList     remotes.RemoteList
 }
 
@@ -46,8 +44,7 @@ func mustHandler() *Handler {
 	if len(devInfoList) == 0 {
 		log.WithField("devices-file", devicesFile).Fatal("No device listed in file. Aborting.")
 	}
-	devList, err := devInfoList.Initialize(udpTimeout)
-	if err != nil {
+	if err := devInfoList.InitializeDevices(udpTimeout); err != nil {
 		log.WithError(err).Fatal("Failed to initialize a Broadlink device")
 	}
 
@@ -61,7 +58,6 @@ func mustHandler() *Handler {
 
 	return &Handler{
 		deviceInfoList: devInfoList,
-		deviceList:     devList,
 		remoteList:     remoteList,
 	}
 }
@@ -129,7 +125,7 @@ func (h *Handler) postRemoteCommand(c *gin.Context) {
 		h.abortNotFound(c, fmt.Sprintf("remote %q has no command %q", remote.Name, name))
 		return
 	}
-	dev := h.deviceList[0]
+	dev := h.deviceInfoList[0].GetBroadlinkDevice()
 	if err := dev.SendIRRemoteCode(cmd, 1); err != nil {
 		h.abort(c, http.StatusInternalServerError, fmt.Sprintf("send IR command failed: %s", err))
 		return
