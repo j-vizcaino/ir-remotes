@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/j-vizcaino/ir-remotes/pkg/devices"
 	"github.com/j-vizcaino/ir-remotes/pkg/utils"
 	"os"
 	"time"
@@ -24,6 +25,7 @@ When remotes file already exists, its content is loaded and newly captured comma
 var remoteName string
 var captureTimeout time.Duration
 var discoveryTimeout time.Duration
+var deviceName string
 
 func init() {
 	flags := captureCmd.Flags()
@@ -34,14 +36,65 @@ func init() {
 		"Name of the IR remote. (required)")
 	captureCmd.MarkFlagRequired("remote-name")
 
+	flags.StringVar(&deviceName,
+		"device-name",
+		"",
+		"Name of the Broadlink device to use for capture. This option is required when device list contains more than one entry.")
+
 	flags.DurationVar(&captureTimeout,
 		"capture-timeout",
 		30*time.Second,
 		"IR control code capture timeout.")
 
-	flags.DurationVar(&discoveryTimeout, "discovery-timeout", 5*time.Second, "Broadlink device network discovery timeout.")
+	flags.DurationVar(&discoveryTimeout,
+		"discovery-timeout",
+		5*time.Second,
+		"Broadlink device network discovery timeout.")
 
 	cmdRoot.AddCommand(captureCmd)
+}
+
+func mustGetDevice() *broadlink.Device {
+	deviceList := devices.DeviceInfoList{}
+	if err := utils.LoadFromFile(&deviceList, devicesFile); err != nil && !os.IsNotExist(err) {
+		log.WithError(err).WithField("devices-file", devicesFile).Fatal("Failed to load devices file")
+	}
+
+	if len(deviceList) == 0 {
+		return findDevice(discoveryTimeout)
+	}
+
+	var d devices.DeviceInfo
+	if len(deviceList) == 1 {
+		// Only one device, select first
+		d = deviceList[0]
+	} else {
+		// Multiple devices, select by name
+		if deviceName == "" {
+			log.Fatal("Multiple devices listed in file. Use the --device-name command line option to select one.")
+		}
+
+		var found bool
+		d, found = deviceList.Find(func(i devices.DeviceInfo) bool {
+			return i.Name == deviceName
+		})
+		if !found {
+			log.WithFields(log.Fields{
+				"device-name": deviceName,
+				"devices-file": devicesFile,
+			}).Fatal("No such device with given name")
+		}
+	}
+
+	if err := d.InitializeDevice(udpTimeout); err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"address": d.UDPAddress,
+			"mac": d.MACAddress,
+			"type": d.TypeName,
+		}).Fatal("Failed to authenticate with Broadlink device")
+	}
+	return d.GetBroadlinkDevice()
+
 }
 
 func Capture(cmd *cobra.Command, args []string) {
@@ -56,7 +109,8 @@ func Capture(cmd *cobra.Command, args []string) {
 		remote = remotes.NewRemote(remoteName)
 		remoteList = append(remoteList, remote)
 	}
-	bd := findDevice(discoveryTimeout)
+
+	bd := mustGetDevice()
 
 	for _, cmdName := range args {
 		_, ok := remote.Commands[cmdName]
@@ -82,7 +136,7 @@ func Capture(cmd *cobra.Command, args []string) {
 	}
 }
 
-func findDevice(timeout time.Duration) broadlink.Device {
+func findDevice(timeout time.Duration) *broadlink.Device {
 	log.Info("Looking for Broadlink devices on your network. Please wait...")
 	devs, err := broadlink.DiscoverDevices(timeout, 0)
 	if err != nil {
@@ -92,32 +146,29 @@ func findDevice(timeout time.Duration) broadlink.Device {
 		log.Fatal("No Broadlink device found")
 	}
 
-	// TODO: add code to pick the right one, in case multiple devices are detected
-	d := devs[0]
-	log.WithField("address", d.UDPAddr.String()).
-		WithField("mac", fmt.Sprintf("%02x", d.MACAddr)).
+	if len(devs) > 1 {
+		log.Info("Multiple devices found. Please run discover first, then run capture again, selecting the right Broadlink device to use.")
+		os.Exit(1)
+	}
+
+	dev := devices.NewDeviceInfo("discovered", devs[0])
+	log.WithField("address", dev.UDPAddress).
+		WithField("mac", dev.MACAddress).
 		Info("Device found!")
 
-	myname, err := os.Hostname() // Your local machine's name.
-	if err != nil {
-		log.WithError(err).Fatal("Failed to get hostname")
+	if err := dev.InitializeDevice(time.Second); err != nil {
+		log.WithError(err).Fatal("Failed to authenticate with device")
 	}
-	myid := make([]byte, 15) // Must be 15 bytes long.
-
-	err = d.Auth(myid, myname) // d.ID and d.AESKey will be updated on success.
-	if err != nil {
-		log.WithError(err).Fatal("Failed to authenticate with device", "addr", d.UDPAddr.String(), "mac", d.MACAddr)
-	}
-	return d
+	return dev.GetBroadlinkDevice()
 }
 
-func captureIRCode(device broadlink.Device, timeout time.Duration, cmdName string) (remotes.IRCommand, error) {
+func captureIRCode(device *broadlink.Device, timeout time.Duration, cmdName string) (remotes.IRCommand, error) {
 	// Enter capturing mode.
 	if err := device.StartCaptureRemoteControlCode(); err != nil {
 		log.WithError(err).Error("Failed to start capture mode")
 		return nil, err
 	}
-	log.Infof("Waiting for IR code. Press '%s' button...", cmdName)
+	log.Infof("Waiting for IR code. Press %q button...", cmdName)
 
 	start := time.Now()
 	for time.Since(start) < timeout {
