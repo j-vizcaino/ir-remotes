@@ -11,6 +11,18 @@ var (
 	cmdCompletion = &cobra.Command{
 		Use:   "completion",
 		Short: "Generate shell completion (Bash or Zsh)",
+		Long: `To load completion run
+
+. <(ir-remotes completion _shell_)
+
+To configure your shell to load completions for each session add to your bashrc or zshrc
+
+# Bash: ~/.bashrc or ~/.profile
+. <(ir-remotes completion bash)
+
+# Zsh: ~/.zshrc
+. <(ir-remotes completion zsh)
+`,
 	}
 	cmdCompletionBash = &cobra.Command{
 		Use:   "bash",
