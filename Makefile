@@ -1,4 +1,6 @@
-.PHONY: build lint test
+.PHONY: build lint test cover
+
+COVER := cover.out
 
 build: lint
 	go build
@@ -8,4 +10,7 @@ lint:
 	go fmt . ./cmd/... ./pkg/...
 
 test: lint
-	go test -v ./cmd/... ./pkg/...	
+	go test -v -coverprofile $(COVER) ./...
+
+cover: test
+	go tool cover -html $(COVER)
