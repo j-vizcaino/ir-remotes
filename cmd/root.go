@@ -43,7 +43,7 @@ func init() {
 }
 
 func Root() *cobra.Command {
-  return cmdRoot
+	return cmdRoot
 }
 
 func Execute() {

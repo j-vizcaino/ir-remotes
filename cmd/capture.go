@@ -80,7 +80,7 @@ func mustGetDevice() *broadlink.Device {
 		})
 		if !found {
 			log.WithFields(log.Fields{
-				"device-name": deviceName,
+				"device-name":  deviceName,
 				"devices-file": devicesFile,
 			}).Fatal("No such device with given name")
 		}
@@ -89,8 +89,8 @@ func mustGetDevice() *broadlink.Device {
 	if err := d.InitializeDevice(udpTimeout); err != nil {
 		log.WithError(err).WithFields(log.Fields{
 			"address": d.UDPAddress,
-			"mac": d.MACAddress,
-			"type": d.TypeName,
+			"mac":     d.MACAddress,
+			"type":    d.TypeName,
 		}).Fatal("Failed to authenticate with Broadlink device")
 	}
 	return d.GetBroadlinkDevice()

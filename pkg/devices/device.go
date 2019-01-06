@@ -16,7 +16,7 @@ type DeviceInfo struct {
 	MACAddress string `json:"macAddress"`
 	Type       uint16 `json:"type"`
 	TypeName   string `json:"typeName,omitempty"`
-	device 	   *broadlink.Device
+	device     *broadlink.Device
 }
 
 // DeviceInfoList represents a list of Broadlink device info.
