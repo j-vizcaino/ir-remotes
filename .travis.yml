@@ -9,3 +9,4 @@ env:
 script:
 - go mod download
 - make test build
+- git diff --quiet --exit-code
