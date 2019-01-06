@@ -87,7 +87,7 @@ func (h *Handler) helperGetDevice(c *gin.Context, devName string) *devices.Devic
 		h.abortNotFound(c, fmt.Sprintf("no such device named %q", devName))
 		return nil
 	}
-	return &devInfo
+	return devInfo
 }
 
 func (h *Handler) getDevice(c *gin.Context) {

@@ -20,13 +20,13 @@ type DeviceInfo struct {
 }
 
 // DeviceInfoList represents a list of Broadlink device info.
-type DeviceInfoList []DeviceInfo
+type DeviceInfoList []*DeviceInfo
 
 // NewDeviceInfo creates a structure holding the information from a Broadlink device, as well as a user provided name.
-func NewDeviceInfo(name string, device broadlink.Device) DeviceInfo {
+func NewDeviceInfo(name string, device broadlink.Device) *DeviceInfo {
 	model, _ := device.DeviceName()
 
-	return DeviceInfo{
+	return &DeviceInfo{
 		Name:       name,
 		UDPAddress: device.UDPAddr.String(),
 		MACAddress: net.HardwareAddr(device.MACAddr).String(),
@@ -102,21 +102,21 @@ func (dl *DeviceInfoList) AddDevice(name string, device broadlink.Device) error 
 	return nil
 }
 
-type DeviceInfoPredicate func(DeviceInfo) bool
+type DeviceInfoPredicate func(*DeviceInfo) bool
 
 func ByName(name string) DeviceInfoPredicate {
-	return func(d DeviceInfo) bool {
+	return func(d *DeviceInfo) bool {
 		return d.Name == name
 	}
 }
 
-func (dl DeviceInfoList) Find(predicate DeviceInfoPredicate) (DeviceInfo, bool) {
+func (dl DeviceInfoList) Find(predicate DeviceInfoPredicate) (*DeviceInfo, bool) {
 	for _, dev := range dl {
 		if predicate(dev) {
 			return dev, true
 		}
 	}
-	return DeviceInfo{}, false
+	return nil, false
 }
 
 func (dl DeviceInfoList) InitializeDevices(timeout time.Duration) error {
