@@ -54,7 +54,7 @@ func Discover(_ *cobra.Command, _ []string) {
 			WithField("model", model).
 			Info("Found device.")
 
-		existing, found := deviceList.Find(func(dev devices.DeviceInfo) bool {
+		existing, found := deviceList.Find(func(dev *devices.DeviceInfo) bool {
 			return dev.MACAddress == macAddr
 		})
 		if found {

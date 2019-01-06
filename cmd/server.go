@@ -81,16 +81,22 @@ func (h *Handler) getDevices(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, h.deviceInfoList)
 }
 
-func (h *Handler) getDevice(c *gin.Context) {
-	devName := c.Param("device")
-	devInfo, found := h.deviceInfoList.Find(func(d devices.DeviceInfo) bool {
-		return d.Name == devName
-	})
+func (h *Handler) helperGetDevice(c *gin.Context, devName string) *devices.DeviceInfo {
+	devInfo, found := h.deviceInfoList.Find(devices.ByName(devName))
 	if !found {
 		h.abortNotFound(c, fmt.Sprintf("no such device named %q", devName))
-		return
+		return nil
 	}
-	c.IndentedJSON(http.StatusOK, devInfo)
+	return devInfo
+}
+
+func (h *Handler) getDevice(c *gin.Context) {
+	devName := c.Param("device")
+
+	devInfo := h.helperGetDevice(c, devName)
+	if devInfo != nil {
+		c.IndentedJSON(http.StatusOK, devInfo)
+	}
 }
 
 func (h *Handler) getRemotes(c *gin.Context) {
@@ -126,9 +132,20 @@ func (h *Handler) postRemoteCommand(c *gin.Context) {
 		h.abortNotFound(c, fmt.Sprintf("remote %q has no command %q", remote.Name, name))
 		return
 	}
+
+	// Defaults to first device unless told otherwise
 	dev := h.deviceInfoList[0].GetBroadlinkDevice()
+
+	devName, found := c.GetQuery("device")
+	if found {
+		devInfo := h.helperGetDevice(c, devName)
+		if devInfo == nil {
+			return
+		}
+		dev = devInfo.GetBroadlinkDevice()
+	}
 	if err := dev.SendIRRemoteCode(cmd, 1); err != nil {
-		h.abort(c, http.StatusInternalServerError, fmt.Sprintf("send IR command failed: %s", err))
+		h.abort(c, http.StatusInternalServerError, fmt.Sprintf("IR code send failure: %s", err))
 		return
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"success": true})

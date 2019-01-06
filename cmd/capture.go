@@ -64,7 +64,7 @@ func mustGetDevice() *broadlink.Device {
 		return findDevice(discoveryTimeout)
 	}
 
-	var d devices.DeviceInfo
+	var d *devices.DeviceInfo
 	if len(deviceList) == 1 {
 		// Only one device, select first
 		d = deviceList[0]
@@ -75,9 +75,7 @@ func mustGetDevice() *broadlink.Device {
 		}
 
 		var found bool
-		d, found = deviceList.Find(func(i devices.DeviceInfo) bool {
-			return i.Name == deviceName
-		})
+		d, found = deviceList.Find(devices.ByName(deviceName))
 		if !found {
 			log.WithFields(log.Fields{
 				"device-name":  deviceName,

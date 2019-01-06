@@ -55,15 +55,15 @@ func TestDeviceList_Find(t *testing.T) {
 	boo := NewDeviceInfo("boo", dev)
 	g.Expect(devList.AddDevice("boo", dev)).To(Succeed())
 
-	res, found := devList.Find(func(d DeviceInfo) bool { return d.Name == "boo" })
+	res, found := devList.Find(ByName("boo"))
 	g.Expect(found).To(BeTrue())
 	g.Expect(res).To(Equal(boo))
 
-	res, found = devList.Find(func(d DeviceInfo) bool { return d.MACAddress == foo.MACAddress })
+	res, found = devList.Find(func(d *DeviceInfo) bool { return d.MACAddress == foo.MACAddress })
 	g.Expect(found).To(BeTrue())
 	g.Expect(res).To(Equal(foo))
 
-	res, found = devList.Find(func(d DeviceInfo) bool { return d.Name == "missing" })
+	res, found = devList.Find(ByName("missing"))
 	g.Expect(found).To(BeFalse())
-	g.Expect(res).To(Equal(DeviceInfo{}))
+	g.Expect(res).To(BeNil())
 }
