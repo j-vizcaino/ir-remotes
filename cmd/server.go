@@ -67,7 +67,8 @@ func (h *Handler) abortNotFound(c *gin.Context, err string) {
 }
 
 func (h *Handler) abort(c *gin.Context, code int, err string) {
-	c.AbortWithStatusJSON(
+	c.Abort()
+	c.IndentedJSON(
 		code,
 		gin.H{
 			"success": false,
