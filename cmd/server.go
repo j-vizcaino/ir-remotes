@@ -7,6 +7,7 @@ import (
 	"github.com/j-vizcaino/ir-remotes/pkg/ui"
 	"github.com/j-vizcaino/ir-remotes/pkg/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -29,6 +30,33 @@ func init() {
 	flags.StringVar(&frontendFile, "frontend-file", "frontend.json", "JSON file with the frontend remote definitions.")
 
 	cmdRoot.AddCommand(cmdServer)
+}
+
+func loggerMiddleWare(c *gin.Context) {
+	// Start timer
+	start := time.Now()
+	path := c.Request.URL.Path
+	raw := c.Request.URL.RawQuery
+
+	// Process request
+	c.Next()
+
+	latency := time.Since(start)
+
+	clientIP := c.ClientIP()
+	method := c.Request.Method
+	statusCode := c.Writer.Status()
+
+	if raw != "" {
+		path = path + "?" + raw
+	}
+	log.WithFields(log.Fields{
+		"method":    method,
+		"url":       path,
+		"code":      statusCode,
+		"client_ip": clientIP,
+		"duration":  latency,
+	}).Infof("%3d - %-5s %s", statusCode, method, path)
 }
 
 type Handler struct {
@@ -166,7 +194,10 @@ func mustRenderIndex() string {
 func Server(_ *cobra.Command, _ []string) {
 	h := mustHandler()
 
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.HandleMethodNotAllowed = true
+	r.Use(gin.Recovery(), loggerMiddleWare)
 
 	indexPage := mustRenderIndex()
 	r.GET("/", func(c *gin.Context) {
@@ -182,10 +213,8 @@ func Server(_ *cobra.Command, _ []string) {
 	api.GET("/remotes/", h.getRemotes)
 	api.GET("/remotes/:remote", h.getRemote)
 	api.POST("/remotes/:remote/:command", h.postRemoteCommand)
-	api.GET("/remotes/:remote/:command", func(c *gin.Context) {
-		c.AbortWithStatus(http.StatusMethodNotAllowed)
-	})
 
+	log.WithField("listen-address", listenAddress).Info("Starting HTTP server")
 	if err := r.Run(listenAddress); err != nil {
 		log.WithError(err).WithField("listen-address", listenAddress).Fatal("Failed to start server")
 	}
