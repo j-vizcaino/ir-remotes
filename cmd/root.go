@@ -40,6 +40,9 @@ func init() {
 		"udp-timeout",
 		1*time.Second,
 		"Amount of time to wait for an answer from Broadlink device.")
+
+	_ = cobra.MarkFlagFilename(flags, "devices-file", "json")
+	_ = cobra.MarkFlagFilename(flags, "remotes-file", "json")
 }
 
 func Root() *cobra.Command {
