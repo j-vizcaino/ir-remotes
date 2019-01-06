@@ -81,16 +81,22 @@ func (h *Handler) getDevices(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, h.deviceInfoList)
 }
 
-func (h *Handler) getDevice(c *gin.Context) {
-	devName := c.Param("device")
-	devInfo, found := h.deviceInfoList.Find(func(d devices.DeviceInfo) bool {
-		return d.Name == devName
-	})
+func (h *Handler) helperGetDevice(c *gin.Context, devName string) *devices.DeviceInfo {
+	devInfo, found := h.deviceInfoList.Find(devices.ByName(devName))
 	if !found {
 		h.abortNotFound(c, fmt.Sprintf("no such device named %q", devName))
-		return
+		return nil
 	}
-	c.IndentedJSON(http.StatusOK, devInfo)
+	return &devInfo
+}
+
+func (h *Handler) getDevice(c *gin.Context) {
+	devName := c.Param("device")
+
+	devInfo := h.helperGetDevice(c, devName)
+	if devInfo != nil {
+		c.IndentedJSON(http.StatusOK, devInfo)
+	}
 }
 
 func (h *Handler) getRemotes(c *gin.Context) {

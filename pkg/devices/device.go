@@ -104,6 +104,12 @@ func (dl *DeviceInfoList) AddDevice(name string, device broadlink.Device) error 
 
 type DeviceInfoPredicate func(DeviceInfo) bool
 
+func ByName(name string) DeviceInfoPredicate {
+	return func(d DeviceInfo) bool {
+		return d.Name == name
+	}
+}
+
 func (dl DeviceInfoList) Find(predicate DeviceInfoPredicate) (DeviceInfo, bool) {
 	for _, dev := range dl {
 		if predicate(dev) {
