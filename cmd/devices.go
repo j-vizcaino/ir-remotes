@@ -1,13 +1,17 @@
 package cmd
 
 import (
-	"github.com/j-vizcaino/ir-remotes/pkg/devices"
-	"github.com/j-vizcaino/ir-remotes/pkg/utils"
+	"net"
+	"os"
+
 	"github.com/mixcode/broadlink"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"net"
-	"os"
+
+	"github.com/j-vizcaino/ir-remotes/pkg/devices"
+	"github.com/j-vizcaino/ir-remotes/pkg/utils"
+
+	"github.com/manifoldco/promptui"
 )
 
 var (
@@ -27,6 +31,18 @@ var (
 func init() {
 	cmdDevices.AddCommand(cmdDevDiscover)
 	cmdRoot.AddCommand(cmdDevices)
+}
+
+func getDeviceName() string {
+	prompt := promptui.Prompt{
+		Label: "Device name",
+	}
+	result, err := prompt.Run()
+	if err != nil {
+		log.WithError(err).Fatal("Prompt failed")
+	}
+
+	return result
 }
 
 func Discover(_ *cobra.Command, _ []string) {
@@ -64,8 +80,8 @@ func Discover(_ *cobra.Command, _ []string) {
 			continue
 		}
 
-		// TODO: add prompt for device name. In the meantime, edit devices.json
-		if err := deviceList.AddDevice("unnamed", bd); err != nil {
+		devName := getDeviceName()
+		if err := deviceList.AddDevice(devName, bd); err != nil {
 			log.WithError(err).Error("Failed to store device")
 		} else {
 			modified = true
