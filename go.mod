@@ -7,7 +7,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0
 	github.com/json-iterator/go v1.1.5
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1
-	github.com/mattn/go-isatty v0.0.4 // indirect
+	github.com/manifoldco/promptui v0.3.2
 	github.com/mixcode/broadlink v0.0.0-20181109083349-59c23b4e7b1a
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742
