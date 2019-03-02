@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/j-vizcaino/ir-remotes/pkg/devices"
 	"github.com/j-vizcaino/ir-remotes/pkg/remotes"
-	"github.com/j-vizcaino/ir-remotes/pkg/ui"
 	"github.com/j-vizcaino/ir-remotes/pkg/utils"
 	"net/http"
 	"time"
@@ -21,13 +20,18 @@ var (
 		Run:   Server,
 	}
 	listenAddress string
-	frontendFile  string
+	assetsDir     string
+)
+
+const (
+	uiLocation = "/ui/"
 )
 
 func init() {
 	flags := cmdServer.Flags()
 	flags.StringVarP(&listenAddress, "listen-address", "l", ":8080", "Server listen address")
-	flags.StringVar(&frontendFile, "frontend-file", "frontend.json", "JSON file with the frontend remote definitions.")
+	flags.StringVar(&assetsDir, "assets-dir", "", "Location of assets directory, served as the root URL")
+	_ = cobra.MarkFlagRequired(flags, "assets-dir")
 
 	cmdRoot.AddCommand(cmdServer)
 }
@@ -179,18 +183,6 @@ func (h *Handler) postRemoteCommand(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"success": true})
 }
 
-func mustRenderIndex() string {
-	remotes := make([]ui.Remote, 0)
-	if err := utils.LoadFromFile(&remotes, frontendFile); err != nil {
-		log.WithError(err).WithField("frontend-file", frontendFile).Fatal("Failed to load frontend data")
-	}
-	index, err := ui.RenderIndex(remotes)
-	if err != nil {
-		log.WithError(err).Fatal("Failed to render main page")
-	}
-	return index
-}
-
 func Server(_ *cobra.Command, _ []string) {
 	h := mustHandler()
 
@@ -199,13 +191,11 @@ func Server(_ *cobra.Command, _ []string) {
 	r.HandleMethodNotAllowed = true
 	r.Use(gin.Recovery(), loggerMiddleWare)
 
-	indexPage := mustRenderIndex()
 	r.GET("/", func(c *gin.Context) {
-		c.Status(http.StatusOK)
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.Writer.WriteHeaderNow()
-		c.Writer.WriteString(indexPage)
+		c.Redirect(http.StatusPermanentRedirect, uiLocation)
 	})
+
+	r.StaticFS(uiLocation, http.Dir(assetsDir))
 
 	api := r.Group("/api")
 	api.GET("/devices/", h.getDevices)
