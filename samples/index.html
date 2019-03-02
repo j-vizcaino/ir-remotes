@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Remotes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+          integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <script>
+        function sendCommand(remote, command) {
+            var url = "/api/remotes/" + remote + "/" + command;
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("POST", url, true);
+            xhttp.send();
+        }
+    </script>
+    <style>
+        html {
+            background-color: #eee;
+        }
+
+        .filled-group > a.button {
+            flex-grow: 1;
+        }
+
+        .filled-group > .spacer {
+            flex-grow: 0.2;
+            min-width: 10px;
+        }
+    </style>
+</head>
+<body>
+<section class="section">
+    <div class="container">
+        <div class="columns is-multiline">
+            <div class="column is-full">
+                <div class="box">
+                    <h2 class="title">
+                        <span class="icon"><i class="fas fa-tv"></i></span>
+                        &nbsp;
+                        <span>TV</span>
+                    </h2>
+                    <hr>
+                    <div class="columns is-multiline">
+                        <div class="column is-half">
+                            <a class="button is-danger is-fullwidth" onclick="sendCommand('tv', 'power')">
+                                <span class="icon"><i class="fas fa-power-off"></i></span>
+                            </a>
+                        </div>
+                        <div class="column is-half">
+                            <a class="button is-fullwidth" onclick="sendCommand('tv', 'input')">
+                                <span class="icon is-small"><i class="fas fa-sign-in-alt"></i></span>
+                                <span>Input</span>
+                            </a>
+                        </div>
+                        <div class="column is-full">
+                            <div class="field is-grouped filled-group">
+                                <a class="button is-info" onclick="sendCommand('tv', 'left')">
+                                    <span class="icon"><i class="fas fa-caret-square-left"></i></span>
+                                </a>
+                                <span class="spacer"></span>
+                                <a class="button is-success" onclick="sendCommand('tv', 'ok')">
+                                    <span class="icon"><i class="fas fa-check-square"></i></span>
+                                </a>
+                                <span class="spacer"></span>
+                                <a class="button is-info" onclick="sendCommand('tv', 'right')">
+                                    <span class="icon"><i class="fas fa-caret-square-right"></i></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="column is-full">
+                <div class="box">
+                    <h2 class="title">
+                        <span class="icon"><i class="fas fa-music"></i></span>
+                        &nbsp;
+                        <span>Sound</span>
+                    </h2>
+                    <hr>
+                    <div class="columns">
+                        <div class="column is-one-third">
+                            <a class="button is-danger is-fullwidth" onclick="sendCommand('ampli', 'power')">
+                                <span class="icon "><i class="fas fa-power-off"></i></span>
+                            </a>
+                        </div>
+
+                        <div class="column is-one-third">
+                            <div class="field is-grouped filled-group">
+                                <a class="button" onclick="sendCommand('ampli', 'input_dvd')">
+                                    <span class="icon"><i class="fas fa-film"></i></span>
+                                    <span>Kodi</span>
+                                </a>
+                                <span class="spacer"></span>
+                                <a class="button" onclick="sendCommand('ampli', 'input_dtv')">
+                                    <span class="icon"><i class="fab fa-playstation"></i></span>
+                                    <span>PS4</span>
+                                </a>
+                                <span class="spacer"></span>
+                                <a class="button" onclick="sendCommand('ampli', 'input_cd')">
+                                    <span class="icon"><i class="fas fa-music"></i></span>
+                                    <span>Pi</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="column is-one-third">
+
+                            <div class="field is-grouped filled-group">
+                                <a class="button" onclick="sendCommand('ampli', 'volume_up')">
+                                    <span class="icon"><i class="fas fa-volume-up"></i></span>
+                                    <span><strong>&#43;</strong></span>
+                                </a>
+                                <span class="spacer"></span>
+                                <a class="button" onclick="sendCommand('ampli', 'mute')">
+                                    <span class="icon"><i class="fas fa-volume-mute"></i></span>
+                                </a>
+                                <span class="spacer"></span>
+                                <a class="button" onclick="sendCommand('ampli', 'volume_down')">
+                                    <span class="icon"><i class="fas fa-volume-down"></i></span>
+                                    <span><strong>-</strong></span>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
