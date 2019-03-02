@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/j-vizcaino/ir-remotes/pkg/assets/ui"
 	"github.com/j-vizcaino/ir-remotes/pkg/devices"
 	"github.com/j-vizcaino/ir-remotes/pkg/remotes"
 	"github.com/j-vizcaino/ir-remotes/pkg/utils"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +22,7 @@ var (
 		Run:   Server,
 	}
 	listenAddress string
-	assetsDir     string
+	assetsUIDir   string
 )
 
 const (
@@ -30,8 +32,7 @@ const (
 func init() {
 	flags := cmdServer.Flags()
 	flags.StringVarP(&listenAddress, "listen-address", "l", ":8080", "Server listen address")
-	flags.StringVar(&assetsDir, "assets-dir", "", "Location of assets directory, served as the root URL")
-	_ = cobra.MarkFlagRequired(flags, "assets-dir")
+	flags.StringVar(&assetsUIDir, "assets-ui-dir", "", "Location of web frontend assets directory.")
 
 	cmdRoot.AddCommand(cmdServer)
 }
@@ -184,6 +185,14 @@ func (h *Handler) postRemoteCommand(c *gin.Context) {
 }
 
 func Server(_ *cobra.Command, _ []string) {
+	uiAssets := ui.Assets
+	if assetsUIDir != "" {
+		uiAssets = http.Dir(assetsUIDir)
+	} else if uiAssets == nil {
+		log.Errorf("No embedded assets and --assets-ui-dir was not provided. Cannot start server.")
+		os.Exit(1)
+	}
+
 	h := mustHandler()
 
 	gin.SetMode(gin.ReleaseMode)
@@ -195,7 +204,7 @@ func Server(_ *cobra.Command, _ []string) {
 		c.Redirect(http.StatusPermanentRedirect, uiLocation)
 	})
 
-	r.StaticFS(uiLocation, http.Dir(assetsDir))
+	r.StaticFS(uiLocation, uiAssets)
 
 	api := r.Group("/api")
 	api.GET("/devices/", h.getDevices)

@@ -1,9 +1,15 @@
-.PHONY: build lint test cover
+.PHONY: build generate lint test cover
 
+ifneq ($(GO_BUILD_TAGS),)
+GO_OPTS := $(GO_OPTS) -tags $(GO_BUILD_TAGS)
+endif
 COVER := cover.out
 
-build: lint
-	go build
+build: lint generate
+	go build $(GO_OPTS)
+
+generate:
+	go generate -v $(GO_OPTS) ./assets/...
 
 lint:
 	go vet . ./cmd/... ./pkg/... 
