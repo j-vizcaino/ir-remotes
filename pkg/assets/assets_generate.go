@@ -11,8 +11,9 @@ import (
 
 func main() {
 	for _, dir:= range []string{"ui", "config"}{
-		err := vfsgen.Generate(http.Dir(dir), vfsgen.Options{
-			Filename: fmt.Sprintf("../pkg/assets/%s/assets_vfsdata.go", dir),
+		assetsDir := fmt.Sprintf("../../assets/%s", dir)
+		err := vfsgen.Generate(http.Dir(assetsDir), vfsgen.Options{
+			Filename: fmt.Sprintf("%s/assets_vfsdata.go", dir),
 			PackageName:  dir,
 			BuildTags:    "embedded",
 			VariableName: "Assets",
