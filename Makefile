@@ -6,7 +6,7 @@ endif
 COVER := cover.out
 
 build: lint generate
-	go build $(GO_OPTS)
+	CGO_ENABLED=0 go build $(GO_OPTS)
 
 generate:
 	go generate $(GO_OPTS) ./pkg/...
