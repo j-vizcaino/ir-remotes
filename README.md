@@ -68,3 +68,18 @@ The following endpoints are provided by the service:
 * `GET /api/remotes/:name`: get the list of IR codes for the remote with `name`
 * `POST /api/remotes/:name/:code`: send the IR code named `code`
 
+### All-in-one REST server and web frontend
+
+The `server` command allows for serving static content from disk.
+By default, accessing `localhost:8080` redirects to `localhost:8080/ui/` where the application serves the UI asset content, located in `assets/ui`.
+
+In order to improve installation and distribution, a binary can be compiled, embedding both the UI files as well as the `remotes.json` and `devices.json` located in `assets/config` directory.
+
+To build this version of the binary
+
+```bash
+$ GO_BUILD_TAGS=embedded make build
+```
+
+The resulting `ir-remotes` binary can now be copied anywhere without any additional file.
+
