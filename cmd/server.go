@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/j-vizcaino/ir-remotes/pkg/assets/config"
 	"github.com/j-vizcaino/ir-remotes/pkg/assets/ui"
 	"github.com/j-vizcaino/ir-remotes/pkg/devices"
 	"github.com/j-vizcaino/ir-remotes/pkg/remotes"
@@ -71,7 +72,7 @@ type Handler struct {
 
 func mustHandler() *Handler {
 	devInfoList := devices.DeviceInfoList{}
-	if err := utils.LoadFromFile(&devInfoList, devicesFile); err != nil {
+	if err := utils.LoadFromFilesystem(&devInfoList, config.Assets, devicesFile); err != nil {
 		log.WithError(err).WithField("devices-file", devicesFile).Fatal("Failed to load devices from file.")
 	}
 	if len(devInfoList) == 0 {
@@ -82,7 +83,7 @@ func mustHandler() *Handler {
 	}
 
 	remoteList := remotes.RemoteList{}
-	if err := utils.LoadFromFile(&remoteList, remotesFile); err != nil {
+	if err := utils.LoadFromFilesystem(&remoteList, config.Assets, remotesFile); err != nil {
 		log.WithError(err).WithField("remotes-file", remotesFile).Fatal("Failed to load remotes from file")
 	}
 	if len(remoteList) == 0 {

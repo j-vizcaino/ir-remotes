@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"io"
+	"net/http"
 	"os"
 )
 
@@ -35,4 +36,13 @@ func LoadFromFile(obj interface{}, filename string) error {
 	}
 	defer fd.Close()
 	return Load(obj, fd)
+}
+
+func LoadFromFilesystem(obj interface{}, fs http.FileSystem, filename string) error {
+	file, err := fs.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return Load(obj, file)
 }
