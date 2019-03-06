@@ -21,6 +21,12 @@ builds:
       goarch: arm64
     env:
     - CGO_ENABLED=0
+  - binary: ir-remotes-standalone
+    goos: [ linux ]
+    goarch: [ amd64 ]
+    flags:
+      - -tags=embedded
+
 archive:
   format: binary
 checksum:
